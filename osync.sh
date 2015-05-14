@@ -645,10 +645,38 @@ function CreateOsyncDirs
 	fi
 }
 
+function GetFullPath {
+  if [ -d $1 ]; then
+    echo `cd $1; pwd`
+  else
+    echo `cd $(dirname $1); pwd`/`basename $1`
+  fi
+}
+
+function SafeReadLink {
+  if ! [ -z "$1" ]; then
+    local link=`readlink $1`
+
+    if ! [ -z "$link" ]; then
+      SafeReadLink `cd $(dirname $1); GetFullPath $link`
+    else
+      echo `GetFullPath $1`
+    fi
+  fi
+}
+
+function ReadLink {
+	if [ `readlink -f . >/dev/null 2>&1; echo $?` -eq "0" ]; then
+	  readlink -f $1
+	else
+	  SafeReadLink $1
+	fi
+}
+
 function CheckMasterSlaveDirs
 {
-	MASTER_SYNC_DIR_CANN=$(readlink -f "$MASTER_SYNC_DIR")
-	SLAVE_SYNC_DIR_CANN=$(readlink -f "$SLAVE_SYNC_DIR")
+	MASTER_SYNC_DIR_CANN=$(ReadLink "$MASTER_SYNC_DIR")
+	SLAVE_SYNC_DIR_CANN=$(ReadLink "$SLAVE_SYNC_DIR")
 
 	if [ "$REMOTE_SYNC" != "yes" ]
 	then
@@ -669,7 +697,7 @@ function CheckMasterSlaveDirs
 				LogError "Cannot create master directory [$MASTER_SYNC_DIR]."
 				exit 1
 			fi
-		else 
+		else
 			LogError "Master directory [$MASTER_SYNC_DIR] does not exist."
 			exit 1
 		fi
@@ -1520,8 +1548,8 @@ function SoftDelete
 	if [ "$SOFT_DELETE" != "no" ] && [ $SOFT_DELETE_DAYS -ne 0 ]
 	then
 		Log "Running soft deletion cleanup."
-		_SoftDelete $SOFT_DELETE_DAYS "$MASTER_SYNC_DIR$MASTER_DELETE_DIR" "$SLAVE_SYNC_DIR$SLAVE_DELETE_DIR"	
-	fi	
+		_SoftDelete $SOFT_DELETE_DAYS "$MASTER_SYNC_DIR$MASTER_DELETE_DIR" "$SLAVE_SYNC_DIR$SLAVE_DELETE_DIR"
+	fi
 }
 
 
@@ -1635,7 +1663,7 @@ function _SoftDelete
 			LogError "Warning: Slave replica dir [$3] isn't writable. Cannot clean old files."
 		fi
 	fi
-	
+
 }
 
 function Init
