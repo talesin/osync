@@ -297,6 +297,21 @@ function CheckEnvironment
         fi
 }
 
+function IsBusyBox
+{
+	local _path=$1
+	if [ -z "$_path" ]; then
+		_path=$(readlink `which uname`)
+	fi
+
+	local _name=`basename $_path`
+	if [ "$_name" == "busybox" ]; then
+		echo "yes"
+	else
+		echo "no"
+	fi
+}
+
 function GetLocalOS
 {
 	LOCAL_OS_VAR=$(uname -spio 2>&1)
@@ -328,6 +343,8 @@ function GetLocalOS
                 ;;
         esac
         LogDebug "Local OS: [$LOCAL_OS_VAR]."
+
+	LOCAL_OS_BUSYBOX=$(IsBusyBox)
 }
 
 function GetRemoteOS
@@ -1925,7 +1942,7 @@ function InitLocalOSSettings
 	## Using mingw version of find instead of windows one
 	## Getting running processes is quite different
 	## Ping command isn't the same
-	if [ "$LOCAL_OS" == "msys" ]
+	if [ "$LOCAL_OS" == "msys" ] || [ "$LOCAL_OS_BUSYBOX" == "yes" ]
 	then
 		FIND_CMD=$(dirname $BASH)/find
 		## TODO: The following command needs to be checked on msys. Does the $1 variable substitution work ?
