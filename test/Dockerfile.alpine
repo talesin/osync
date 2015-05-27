@@ -1,0 +1,7 @@
+FROM gliderlabs/alpine
+
+RUN apk-install bash rsync
+
+RUN ln -s /etc /tmp/dir1 && mkdir /tmp/dir2
+
+CMD [ "bash" ]
