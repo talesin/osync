@@ -300,11 +300,9 @@ function CheckEnvironment
 function IsBusyBox
 {
 	local _path=$1
-	if [ -z "$_path" ]; then
-		_path=$(readlink `which uname`)
-	fi
+	[[ -z "$_path" ]] && _path=$(readlink `which uname`)
+	[[ ! -z $_path ]] && local _name=`basename $_path`
 
-	local _name=`basename $_path`
 	if [ "$_name" == "busybox" ]; then
 		echo "yes"
 	else
@@ -459,45 +457,46 @@ function WaitForTaskCompletion
 # Will stop task and log alert if $3 seconds passed since script start unless $3 equals 0.
 function WaitForCompletion
 {
-        soft_alert=0
+	soft_alert=0
 	log_time=0
+
 	while eval "$PROCESS_TEST_CMD" > /dev/null
-        do
-                Spinner
-                if [ $((($SECONDS + 1) % $KEEP_LOGGING)) -eq 0 ]
-                then
-			if [ $log_time -ne $EXEC_TIME ]
+	do
+		Spinner
+		if [ $((($SECONDS + 1) % $KEEP_LOGGING)) -eq 0 ]
 			then
+			if [ $log_time -ne $EXEC_TIME ]
+				then
 				log_time=$EXEC_TIME
-                        	Log "Current task still running."
+				Log "Current task still running."
 			fi
-                fi
-                if [ $SECONDS -gt "$2" ]
-                then
-                        if [ $soft_alert -eq 0 ] && [ "$2" != 0 ]
-                        then
-                                LogError "Max soft execution time exceeded for script."
-                                soft_alert=1
-                        fi
-                        if [ $SECONDS -gt "$3" ] && [ "$3" != 0 ]
-                        then
-                                LogError "Max hard execution time exceeded for script. Stopping current task execution."
-                                kill -s SIGTERM $1
-                                if [ $? == 0 ]
-                                then
-                                        LogError "Task stopped succesfully"
-                                else
-					LogError "Sending SIGTERM to proces failed. Trying the hard way."
-                                        kill -9 $1
-                                        if [ $? != 0 ]
-                                        then
-                                                LogError "Could not stop task."
-                                        fi
-                                fi
-                                return 1
-                        fi
-                fi
-                sleep $SLEEP_TIME
+		fi
+		if [ $SECONDS -gt "$2" ]
+			then
+			if [ $soft_alert -eq 0 ] && [ "$2" != 0 ]
+				then
+				LogError "Max soft execution time exceeded for script."
+				soft_alert=1
+			fi
+			if [ $SECONDS -gt "$3" ] && [ "$3" != 0 ]
+				then
+				LogError "Max hard execution time exceeded for script. Stopping current task execution."
+				kill -s SIGTERM $1
+				if [ $? == 0 ]
+					then
+					LogError "Task stopped succesfully"
+				else
+					LogError "Sending SIGTERM to process failed. Trying the hard way."
+					kill -9 $1
+					if [ $? != 0 ]
+						then
+						LogError "Could not stop task."
+					fi
+				fi
+				return 1
+			fi
+		fi
+		sleep $SLEEP_TIME
 	done
 	wait $child_pid
 	return $?
@@ -1013,7 +1012,7 @@ function tree_list
 		ESC=$(EscapeSpaces "$1")
 		rsync_cmd="$(type -p $RSYNC_EXECUTABLE) --rsync-path=\"$RSYNC_PATH\" $RSYNC_ARGS -8 --exclude \"$OSYNC_DIR\" $RSYNC_EXCLUDE -e \"$RSYNC_SSH_CMD\" --list-only $REMOTE_USER@$REMOTE_HOST:\"$ESC/\" | grep \"^-\|^d\" | awk '{\$1=\$2=\$3=\$4=\"\" ;print}' | awk '{\$1=\$1 ;print}' | (grep -v \"^\.$\" || :) | sort > \"$RUN_DIR/osync_$2_$SCRIPT_PID\" &"
 	else
-		rsync_cmd="$(type -p $RSYNC_EXECUTABLE) --rsync-path=\"$RSYNC_PATH\" $RSYNC_ARGS -8 --exclude \"$OSYNC_DIR\" $RSYNC_EXCLUDE --list-only \"$1/\" | grep \"^-\|^d\" | awk '{\$1=\$2=\$3=\$4=\"\" ;print}' | awk '{\$1=\$1 ;print}' | (grep -v \"^\.$\" || :) | sort > \"$RUN_DIR/osync_$2_$SCRIPT_PID\" &"
+		rsync_cmd="$(type -p $RSYNC_EXECUTABLE) --rsync-path=\"$RSYNC_PATH\" $RSYNC_ARGS -8 --exclude \"$OSYNC_DIR\" $RSYNC_EXCLUDE --list-only \"${1%/}/\" | grep \"^[-d]\" | awk '{\$1=\$2=\$3=\$4=\"\" ;print}' | awk '{\$1=\$1 ;print}' | (grep -v \"^\.$\" || :) | sort > \"$RUN_DIR/osync_$2_$SCRIPT_PID\" & "
 	fi
 	LogDebug "RSYNC_CMD: $rsync_cmd"
 	## Redirect commands stderr here to get rsync stderr output in logfile
@@ -1942,12 +1941,16 @@ function InitLocalOSSettings
 	## Using mingw version of find instead of windows one
 	## Getting running processes is quite different
 	## Ping command isn't the same
-	if [ "$LOCAL_OS" == "msys" ] || [ "$LOCAL_OS_BUSYBOX" == "yes" ]
+	if [ "$LOCAL_OS" == "msys" ]
 	then
 		FIND_CMD=$(dirname $BASH)/find
 		## TODO: The following command needs to be checked on msys. Does the $1 variable substitution work ?
 		PROCESS_TEST_CMD='ps -a | awk "{\$1=\$1}\$1" | awk "{print \$1}" | grep $1'
 		PING_CMD="ping -n 2"
+	elif [ "$LOCAL_OS_BUSYBOX" == "yes" ]; then
+		FIND_CMD=find
+		PROCESS_TEST_CMD='ps -a | awk "{\$1=\$1}\$1" | awk "{print \$1}" | grep $1'
+		PING_CMD="ping -c 2"
 	else
 		FIND_CMD=find
 		PROCESS_TEST_CMD='ps -p$1'
@@ -1958,6 +1961,8 @@ function InitLocalOSSettings
 	if [ "$LOCAL_OS" == "MacOSX" ] || [ "$LOCAL_OS" == "BSD" ]
 	then
 		STAT_CMD="stat -f \"%Sm\""
+	elif [ "$LOCAL_OS_BUSYBOX" == "yes" ]; then
+		STAT_CMD="stat -c %y"
 	else
 		STAT_CMD="stat --format %y"
 	fi

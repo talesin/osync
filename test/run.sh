@@ -57,7 +57,7 @@ function docker_stop {
 }
 
 function tests {
-  docker_run $1 ./osync/osync.sh --master=/tmp/dir1 --slave=/tmp/dir2
+  docker_run $1 /osync/osync.sh --master=/tmp/dir1 --slave=/tmp/dir2
 }
 
 case "$OPT" in
