@@ -42,14 +42,23 @@ function docker_remove_image {
   docker rmi -f osync-$1 2>/dev/null
 }
 
-function docker_shell {
-  docker run -ti -v $DIR:/osync --rm osync-$1 bash
-}
-
 function docker_run {
   local name=$1
   shift 1
-  docker run -t -v $DIR:/osync --rm osync-$name $@
+
+  local dopts=
+  if [ "$1" = "-i" ]; then
+    dopts=-i
+    shift 1
+  fi
+
+  docker run -t $dopts -v $DIR:/osync -w /osync --rm osync-$name $@
+}
+
+function docker_shell {
+    local name=$1
+    shift 1
+    docker_run $name -i bash $@
 }
 
 function docker_stop {
@@ -57,7 +66,8 @@ function docker_stop {
 }
 
 function tests {
-  docker_run $1 /osync/osync.sh --master=/tmp/dir1 --slave=/tmp/dir2
+  export DEBUG=yes
+  /osync/osync.sh --master=/tmp/dir1 --slave=/tmp/dir2 2>&1
 }
 
 case "$OPT" in
@@ -75,8 +85,12 @@ case "$OPT" in
     run docker_shell
   ;;
 
-  tests)
-    run2 tests
+  docker)
+    run docker_run $ARGS
+  ;;
+
+  *)
+    $OPT $ARGS
   ;;
 
 esac
