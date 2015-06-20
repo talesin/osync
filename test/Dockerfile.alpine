@@ -2,6 +2,9 @@ FROM gliderlabs/alpine
 
 RUN apk-install bash rsync
 
-RUN ln -s /etc /tmp/dir1 && mkdir /tmp/dir2
+RUN ln -s /etc /tmp/master1 \
+  && ln -s /tmp/master1 /tmp/master \
+  && mkdir /tmp/slave1 \
+  && ln -s /tmp/slave1 /tmp/slave
 
 CMD [ "bash" ]

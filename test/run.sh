@@ -17,6 +17,7 @@ function run2 {
   local cmd=$1
   if ! [ -z "$cmd" ]; then
     if [ -z "$ARGS" ]; then
+      $cmd node
       $cmd alpine
       $cmd ubuntu
     else
@@ -34,12 +35,21 @@ function run {
   fi
 }
 
+function docker_clear {
+  docker ps -a | grep osync | awk '{print $1}' | xargs docker rm
+  docker images | grep osync | awk '{print $1}' | xargs docker rmi
+}
+
 function docker_build {
   docker build -t osync-$1 -f $DIR/test/Dockerfile.$1 $DIR
 }
 
 function docker_remove_image {
   docker rmi -f osync-$1 2>/dev/null
+}
+
+function docker_remove_container {
+  docker rm -f osync-$1 2>/dev/null
 }
 
 function docker_run {
@@ -52,7 +62,9 @@ function docker_run {
     shift 1
   fi
 
-  docker run -t $dopts -v $DIR:/osync -w /osync --rm osync-$name $@
+  docker_stop $name
+  docker_remove_container $name
+  docker run -t $dopts -v $DIR:/osync -w /osync --name osync-$name osync-$name $@
 }
 
 function docker_shell {
@@ -65,9 +77,19 @@ function docker_stop {
   docker stop osync-$1 2>/dev/null
 }
 
+function docker_copy {
+  docker cp osync-$1:$2 $3
+}
+
 function tests {
   export DEBUG=yes
-  /osync/osync.sh --master=/tmp/dir1 --slave=/tmp/dir2 2>&1
+  cd /tmp/master/
+  find . > /tmp/files-master.log
+
+  /osync/osync.sh --master=/tmp/master --slave=/tmp/slave
+
+  cd /tmp/slave/
+  find . > /tmp/files-slave.log
 }
 
 case "$OPT" in
