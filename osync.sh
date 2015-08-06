@@ -2012,6 +2012,31 @@ function Init
 	ALERT_LOG_FILE="$ALERT_LOG_FILE$COMPRESSION_EXTENSION"
 }
 
+function BusyBoxFind
+{
+	# local args=$@
+	# local newargs=
+	# until [ -z "$1" ]; do
+	# 	case "$1" in
+	# 		-ctime)
+	# 			newargs="$newargs -mtime"
+	# 		;;
+	#
+	# 		-empty)
+	# 			#find . -type d -exec bash -c 'if [ `ls -Al {} | wc -l` -le 1 ]; then echo {}; fi' \;
+	# 			newargs="$newargs -exec bash -c 'if [ `ls -Al {} | wc -l` -le 1 ]; then echo {}; fi' \;"
+	# 		;;
+	#
+	# 		*)
+	# 			newargs="$newargs $1"
+	# 		;;
+	# 	esac
+	# 	shift 1
+	# done
+	# LogDebug "FIND: Changed '$args' to '$newargs'"
+	find $newargs
+}
+
 function InitLocalOSSettings
 {
 	## If running under Msys, some commands don't run the same way
@@ -2025,7 +2050,7 @@ function InitLocalOSSettings
 		PROCESS_TEST_CMD='ps -a | awk "{\$1=\$1}\$1" | awk "{print \$1}" | grep $1'
 		PING_CMD="ping -n 2"
 	elif [ "$LOCAL_OS_BUSYBOX" == "yes" ]; then
-		FIND_CMD=find
+		FIND_CMD=BusyBoxFind
 		PROCESS_TEST_CMD='ps -a | awk "{\$1=\$1}\$1" | awk "{print \$1}" | grep $1'
 		PING_CMD="ping -c 2"
 	else

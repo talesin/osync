@@ -1,6 +1,6 @@
 FROM gliderlabs/alpine
 
-RUN apk-install bash rsync
+RUN apk-install bash rsync findutils
 
 RUN ln -s /etc /tmp/master1 \
   && ln -s /tmp/master1 /tmp/master \
