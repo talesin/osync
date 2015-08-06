@@ -811,8 +811,8 @@ function ReadLink {
 
 function CheckMasterSlaveDirs
 {
-	MASTER_SYNC_DIR_CANN=$(ReadLink "$MASTER_SYNC_DIR")
-	SLAVE_SYNC_DIR_CANN=$(ReadLink "$SLAVE_SYNC_DIR")
+	MASTER_SYNC_DIR_CANN=$(realpath "$MASTER_SYNC_DIR")
+	SLAVE_SYNC_DIR_CANN=$(realpath "$SLAVE_SYNC_DIR")
 
 	if [ "$REMOTE_SYNC" != "yes" ]
 	then
