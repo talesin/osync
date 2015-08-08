@@ -53,7 +53,7 @@ function docker_run {
 
   docker_stop $name
   docker_remove_container $name
-  docker run -t $dopts --name osync-$name osync-$name $@
+  docker run -t $dopts -e "DEBUG=$DEBUG" --name osync-$name osync-$name $@
 }
 
 function docker_shell {
@@ -82,7 +82,7 @@ case "$OPT" in
   ;;
 
   shell)
-    run docker_shell
+    run docker_shell $ARGS
   ;;
 
   clear)
@@ -93,6 +93,7 @@ case "$OPT" in
     name=$1
     shift 1
     ARGS=$@
+    run docker_build $name
     run docker_run $name /osync/tests/run.sh $ARGS
   ;;
 

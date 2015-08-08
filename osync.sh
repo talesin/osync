@@ -956,7 +956,7 @@ function UnlockDirectories
 	if [ "$REMOTE_SYNC" == "yes" ]
 	then
 		CheckConnectivity3rdPartyHosts
-       		CheckConnectivityRemoteHost
+    CheckConnectivityRemoteHost
 		eval "$SSH_CMD \"if [ -f \\\"$SLAVE_LOCK\\\" ]; then $COMMAND_SUDO rm \\\"$SLAVE_LOCK\\\"; fi 2>&1\"" > $RUN_DIR/osync_UnlockDirectories_$SCRIPT_PID &
 		child_pid=$!
 		WaitForTaskCompletion $child_pid 0 1800
