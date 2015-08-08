@@ -1,0 +1,19 @@
+FROM gliderlabs/alpine
+
+RUN mkdir /osync
+
+WORKDIR /osync
+
+RUN apk-install \
+  bash \
+  rsync \
+  findutils \
+  openssh
+
+RUN rc-update add sshd \
+  && mkdir -p /run/openrc \
+  && touch /run/openrc/softlevel
+
+COPY . /osync
+
+CMD [ "bash" ]

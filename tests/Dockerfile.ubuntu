@@ -1,0 +1,14 @@
+FROM ubuntu
+
+RUN mkdir /osync
+
+WORKDIR /osync
+
+RUN apt-get update && apt-get install \
+  rsync \
+  openssh-client \
+  openssh-server
+
+COPY . /osync
+
+CMD [ "bash" ]
