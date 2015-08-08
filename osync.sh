@@ -671,10 +671,8 @@ function SafeReadLink {
 
 function ReadLink {
 	if [ `readlink -f . >/dev/null 2>&1; echo $?` -eq "0" ]; then
-		LogDebug "Calling 'readlink -f'"
 	  readlink -f $1
 	else
-		LogDebug "Wrapping 'readlink'"
 	  SafeReadLink $1
 	fi
 }

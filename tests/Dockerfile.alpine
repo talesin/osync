@@ -1,0 +1,11 @@
+FROM gliderlabs/alpine
+
+RUN mkdir /osync
+
+WORKDIR /osync
+
+RUN apk-install bash rsync findutils
+
+COPY . /osync
+
+CMD [ "bash" ]
